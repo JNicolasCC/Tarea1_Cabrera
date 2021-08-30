@@ -1,0 +1,140 @@
+---
+title: "Tarea 1- Fundamentos de programación"
+author: "Jairo Nicolas Cabrera"
+date: "8/29/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Solución.
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(dplyr)
+cg=read.csv2("C:/Users/jnico/OneDrive/Documents/FD/Talleres/Datos/Caracteristicas Generales.csv")
+ft=read.csv2("C:/Users/jnico/OneDrive/Documents/FD/Talleres/Datos/Fuerza de Trabajo.csv")
+```
+
+
+##Punto 1.
+
+**a.** Una el módulo Área de características generales (personas) y el módulo Área fuerza de trabajo ¿Cuáles variables deberían usar como llave?
+
+```{r}
+dato=left_join(cg,ft,by=c("ï..DIRECTORIO","SECUENCIA_P","ORDEN"))
+```
+
+Las variables son DIRECTORIO, SECCION_P y ORDEN.
+
+**b.** Verifique que el tamaño de la nueva base de datos tenga la misma cantidad de registros que la de características de las personas.
+
+```{r}
+nrow(dato)
+nrow(cg)
+```
+
+**c.** Usando la librería dplyr, asigne el valor 1 a aquellos que en la pregunta P6240 respondieron 1 y cero a las demás alternativas respondidas. ¿Qué nombre le pondrá al objeto creado?
+
+```{r}
+dato %<>% mutate(P6240a=ifelse(P6240==1,1,0))
+```
+
+El objeto sera concido como P6240a.
+
+**d.** A partir del objeto que acaba de crear, cree otro objeto que guarde, agrupado por hogar(DIRECTORIO, SECUENCIA_P) la suma de ocupados en dicho hogar. Asegúrese de sólo dejar los campos llave, y la variable que acaba de crear)
+
+```{r}
+oc = dato %>%group_by(ï..DIRECTORIO,SECUENCIA_P,P6240a) %>% summarise(Ocupados=n()) %>% filter(P6240a==1)
+```
+
+**e.** Asegúrese de que la variable que almacena el número de ocupados por hogar sea un factor.
+
+```{r}
+oc1 =factor(oc$Ocupados)
+class(oc1)
+```
+
+**f.** Presente una tabla que indique cuántos hogares tienen 0 ó 1 ó 2 ó . . . ocupados en dicho hogar. Tenga presente que si cada hogar se repite tantas veces como miembros tiene, debe eliminar los registros repetidos de dicho vector (tal vez con el comando unique())
+
+```{r}
+t1 =table(oc$Ocupados)
+t1
+```
+
+**g.** Repita el paso ya ejecutado de asignar el valor 1 a aquellos que en la pregunta P6240 respondieron 1 y cero a las demás alternativas respondidas.
+
+```{r}
+dato %<>% mutate(P6240b=ifelse(P6240==1,1,0))
+```
+
+**h.** A partir del objeto que acaba de crear, cree otro objeto que guarde, agrupado por hogar (DIRECTORIO, SECUENCIA_P) la suma de ocupados en dicho hogar. Asegúrese de sólo dejar los campos llave, la variable que acaba de crear y el factor de expansión (fex_c_2011.x)
+
+
+```{r}
+oc2= dato %>% group_by(ï..DIRECTORIO,SECUENCIA_P) %>% mutate(Ocupados2=sum(P6240b,na.rm = TRUE)) %>% select(ï..DIRECTORIO,SECUENCIA_P,Ocupados2,fex_c_2011.x) %>% unique()
+```
+
+**i.** Asegúrese de que la variable que almacena el número de ocupados por hogar sea un factor.
+
+```{r}
+oc3= factor(oc2$P6240b)
+class(oc3)
+```
+
+**j.** Utilice la función wtd.table() donde el primer parámetro es la variable que alberga el número de individuos ocupados por hogar y la segunda variable es el factor de expansión. El tipo de salida que se espera es ‘table’
+
+```{r}
+library(Hmisc)
+t2 =wtd.table(oc2$Ocupados2,oc2$fex_c_2011.x,"table")
+t2
+```
+
+**k.** Calcule la frecuencia relativa y escriba su interpretación del resultado.
+
+```{r}
+prop.table(t2,NULL)
+```
+
+##Punto 2.
+
+```{r}
+eq=read.csv2("C:/Users/jnico/Downloads/Equivalencias ciiu.csv")
+o= read.csv("C:/Users/jnico/OneDrive/Documents/FD/Talleres/Datos/Ocupado.csv",sep = ";")
+```
+
+**a.** Una el módulo Área de características generales (personas) y el módulo Ocupados, encargándose que quede del tamaño del módulo de ocupados.
+
+```{r}
+dato2 =left_join(o,cg, by= c("ï..DIRECTORIO","SECUENCIA_P","ORDEN"))
+```
+
+**b.** A continuación, una el archivo de equivalencias ciiu con el objeto de determinar la Sección (variable RAMA2D_R4) en la que trabaja cada individuo ocupado.
+
+```{r}
+names(eq)[3] = "RAMA2D_R4"
+dato3 =full_join(dato2,eq,by="RAMA2D_R4")
+```
+
+**c.**  Presente una tabla con el número de encuestados agrupado por rama de actividad económica Pero esta solución no hace uso de los factores de expansión de la encuesta.
+
+```{r}
+t3= table(dato3$Sección)
+```
+
+**d.** Presente una tabla donde se ha sumado el factor de expansión (fex_c_2011.x), agrupado por Sección (Área de la economía).
+
+```{r}
+h =dato3 %>% group_by(fex_c_2011.x) %>% select(RAMA2D_R4,Sección,fex_c_2011.x)
+t4= table(h$Sección,h$fex_c_2011.x)
+```
+
+**e.**  Presente una tabla de la frecuencia relativa de los ocupados por área de la economía y escriba su interpretación del resultado.
+
+```{r}
+t5= prop.table(t4)
+```
+
